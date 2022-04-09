@@ -1,0 +1,95 @@
+package app.server;
+
+import app.message.Message;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+
+public class WorkerThread extends Thread {
+	private Socket socket;
+    private ObjectOutputStream ous;
+    private ObjectInputStream ois;
+    private ServerThread serverThread;
+    private String username;
+
+    public WorkerThread(Socket socket, ServerThread serverThread) {
+        try {
+            this.socket = socket;
+            this.ous = new ObjectOutputStream(this.socket.getOutputStream());
+            this.ois = new ObjectInputStream(this.socket.getInputStream());
+            this.serverThread = serverThread;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void run() {
+    	try {
+			Message firstMessage = (Message) this.ois.readObject();
+			this.setUsername(firstMessage.getText());
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	
+        while(true) {
+            try {
+                Message message = (Message) this.ois.readObject();
+                if (message.getRequest().equals("Broadcast")) { // Message is Broadcast
+                	this.serverThread.sendToAll(message);
+                }
+                else if (message.getRequest().equals("Online Users")) { // Message requested online users
+                	String onlineUserList = this.serverThread.getOnlineUsers();
+                	this.returnMessageToSender(message.getSender(), onlineUserList, "Private");
+                }
+                else if (message.getRequest().equals("Private")) { // Private Message
+                	if (this.serverThread.isExist(message.getReceiver())) { // If Username exist
+                		this.serverThread.sendPrivately(message, message.getReceiver());                		
+                	}
+                	else { // Username doesn't exist
+                		String response = "User " + message.getReceiver() + " not found";
+                		this.returnMessageToSender(message.getSender(), response, "Private");
+                	}
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void send(Message message) {
+        try {
+            this.ous.writeObject(message);
+            this.ous.flush();
+        } catch (IOException e) {
+            this.serverThread.removeClient(message.getReceiver());
+            String response = "User " + message.getReceiver() + " is Disconnected";
+            this.returnMessageToSender(message.getSender(), response, "Private");
+        }
+    }
+    
+    public String getUsername() {
+    	return this.username;
+    }
+    
+    public void setUsername(String username) {
+    	this.username = username;
+    }
+    
+    public Socket getSocket() {
+    	return this.socket;
+    }
+    
+    public void returnMessageToSender(String sender, String text, String request) {
+    	Message message = new Message(request);
+    	message.setSender("Remote Server");
+    	message.setReceiver(sender);
+    	message.setText(text);
+    	this.serverThread.sendPrivately(message, sender);
+    }
+}
