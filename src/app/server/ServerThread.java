@@ -22,6 +22,7 @@ public class ServerThread extends Thread {
 	    }
 
 	    public void run() {
+	    	System.out.println("Server Alive");
 	        // listen for a new connection
 	        while(true) {
 	            try {
@@ -36,7 +37,9 @@ public class ServerThread extends Thread {
 
 	                // store the new thread to the hash table
 	                String clientId = socket.getInetAddress().getHostAddress() + ":" + socket.getPort();
-
+	                
+	                System.out.println("Connection Established with " + clientId);
+	                
 	                this.clientList.put(clientId, wt);
 	            } catch (IOException e) {
 	                e.printStackTrace();
@@ -107,7 +110,7 @@ public class ServerThread extends Thread {
 	    }
 	    
 	    public String getOnlineUsers() {
-	    	String onlineUsers = "---Online Users---";
+	    	String onlineUsers = "\n---Online Users---\n";
 	    	// iterate through all clients
 	    	Enumeration<String> clientKeys = this.clientList.keys();
 	        while (clientKeys.hasMoreElements()) {
@@ -117,7 +120,6 @@ public class ServerThread extends Thread {
 
 	            onlineUsers += (wt.getUsername() + "\n");
 	        }
-	        onlineUsers += "---THIS IS END OF THE RESPONSE---\n";
 	        return onlineUsers;
 	    }
 }

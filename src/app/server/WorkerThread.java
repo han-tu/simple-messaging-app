@@ -39,13 +39,16 @@ public class WorkerThread extends Thread {
             try {
                 Message message = (Message) this.ois.readObject();
                 if (message.getRequest().equals("Broadcast")) { // Message is Broadcast
+                	System.out.println("Got Broadcast from " + message.getSender() + " with message:\n"+message.getText());
                 	this.serverThread.sendToAll(message);
                 }
                 else if (message.getRequest().equals("Online Users")) { // Message requested online users
+                	System.out.println("Got Online Users Request from " + message.getSender());
                 	String onlineUserList = this.serverThread.getOnlineUsers();
                 	this.returnMessageToSender(message.getSender(), onlineUserList, "Private");
                 }
                 else if (message.getRequest().equals("Private")) { // Private Message
+                	System.out.println("Got private message from " + message.getSender() + " to " + message.getReceiver() + " with message:\n" + message.getText());
                 	if (this.serverThread.isExist(message.getReceiver())) { // If Username exist
                 		this.serverThread.sendPrivately(message, message.getReceiver());                		
                 	}
@@ -55,7 +58,8 @@ public class WorkerThread extends Thread {
                 	}
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Connection Lost with " + this.username);
+                break;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }

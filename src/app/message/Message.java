@@ -14,13 +14,17 @@ public class Message implements Serializable {
     
     /*
      * Request Type List:
-     * "Online User"	--> Request a list of online users
+     * "Online Users"	--> Request a list of online users
      * "Private"		--> Send message privately
      * "Broadcast"		--> Send message as a broadcast to all online users
      */
 
     public Message(String request) {
     	this.request = request;
+    }
+    
+    public Message() {
+    	
     }
     
     public String getSender() {
